@@ -3,19 +3,17 @@ Attribute VB_Name = "GetHoursByProject"
 Option Explicit
 ' Global variable here
 Public logFile As String
-Public projectId As String
-Public projectDate As Date
-public projectWeekNumber As Integer
+
 Public counter As Integer
 Public previousCounter As Integer
 
-' Public pYear As Integer
-' Public pIndex As Integer
-' Public pId As String
-' Public pDate As Date
-' Public pCalcTime As Long
-' Public pTotalTime As Double
-' Public pWeekNumber As Integer
+Public pYear As Integer         ' Year project was worked on
+Public pIndex As Integer        ' Project index number (for arrays)
+Public pId As String            ' Project identification number
+Public pDate As Date            ' Date project was worked on
+Public pCalcTime As Long        ' Time worked on project calculated (difference between start and end time)
+Public pTotalTime As Double     ' Time worked on project including breaks added together
+Public pWeekNumber As Integer   ' Week the project was worked on
 
 Sub GetHoursByProject()
 	'
@@ -59,12 +57,12 @@ Sub GetHoursByProject()
 
             ' Check if Cell contains date
             if dateResult(0) = True Then
-                projectDate = dateResult(1)
+                pDate = dateResult(1)
             ' Check if Cell contains project
             ' Check if first character is alphabetical and the following 4 characters are numbers
             ElseIf IsAlpha(projectLetter) And IsNumeric(projectNumbers) Then
                 ' Add project letter and numbers to create project ID
-                projectId = projectLetter + projectNumbers
+                pId = projectLetter + projectNumbers
                 
                 Dim startTime As String
                 Dim endTime As String
@@ -76,8 +74,8 @@ Sub GetHoursByProject()
                 ' Total time calculated without breaks
                 calculatedTime = CalculateTimeDifference(startTime, endTime) ' Format(, "hh:mm")
                 
-                results(counter, 0) = projectDate
-                results(counter, 1) = projectId
+                results(counter, 0) = pDate
+                results(counter, 1) = pId
                 results(counter, 2) = CDbl(calculatedTime)
                 results(counter, 3) = CDbl(totalTime)
 
@@ -104,47 +102,22 @@ Sub GetHoursByProject()
     Call DisplayYearlyTime(filteredResult, previousCounter, column, rowCount)
 
     Exit Sub ' ---------------------------------------------------------------------------
-    
-    ' With Cells(1, "K")
-    '     .value = "Totale tijden"
-    '     .Font.Bold = True
-    '     .Font.Size = 16
-    ' End With
-    
-    ' With Cells(2, "K")
-    '     .value = "Project"
-    '     .Font.Bold = True
-    '     .Font.Size = 13
-    ' End With
-    
-    ' With Cells(2, "L")
-    '     .value = "Tijden"
-    '     .Font.Bold = True
-    '     .Font.Size = 13
-    '     .HorizontalAlignment = xlRight
-    ' End With
-    
-    ' With Cells(2, "N")
-    '     .value = "Tijden met pauze"
-    '     .Font.Bold = True
-    '     .Font.Size = 13
-    ' End With
-    
+        
     ' Dim b As Integer
     ' ' Loop through array
     ' For b = LBound(results) To UBound(results)
         
-    '     projectId = results(b, 0)
+    '     pId = results(b, 0)
     '     calculatedTime = results(b, 1)
     '     totalTime = results(b, 2)
         
     '     ' Skip empty array items
-    '     If Len(projectId) > 0 And Len(calculatedTime) > 0 And Len(totalTime) > 0 Then
+    '     If Len(pId) > 0 And Len(calculatedTime) > 0 And Len(totalTime) > 0 Then
     '         Dim cellCounter
     '         ' Since we have two headers above move three rows down
     '         cellCounter = b + 3
             
-    '         Cells(cellCounter, "K").value = projectId
+    '         Cells(cellCounter, "K").value = pId
     '         With Cells(cellCounter, "L")
     '             .value = calculatedTime / 3600 ' Devide seconds into hours
     '             .NumberFormat = "0.0"
@@ -386,13 +359,6 @@ Function FilterByYear(arr As Variant, count As Integer) As Variant
     Dim yearCounter As Integer
     Dim projectCounter As Integer
 
-    ' Project related variables
-    Dim pId As String
-    Dim pDate As Date
-    Dim pYear As Integer
-    Dim pCalcTime As Long
-    Dim pTotalTime As Double 
-
     ' If year is found in array assign it's position in the arry to this variable
     Dim yearInArray As Integer
 
@@ -452,16 +418,7 @@ Function FilterByYear(arr As Variant, count As Integer) As Variant
     FilterByYear = result
 End Function
 
-Function FilterByWeek(arr As Variant) As Variant
-    Dim pYear As Integer
-    Dim pIndex As Integer
-    Dim pId As String
-    Dim pDate As Date
-    Dim pCalcTime As Long
-    Dim pTotalTime As Double 
-
-    Dim weekNumber As Integer
-    
+Function FilterByWeek(arr As Variant) As Variant    
     Dim a As Integer
     Dim b As Integer
     Dim c As Integer
@@ -481,11 +438,11 @@ Function FilterByWeek(arr As Variant) As Variant
             pCalcTime = arr(3)(a, b, 3) ' pCalcTime
             pTotalTime = arr(3)(a, b, 4) ' pTotalTime
             if Len(pId) > 0 Then
-                weekNumber = WorksheetFunction.WeekNum(pDate, vbMonday) - 1
+                pWeekNumber = WorksheetFunction.WeekNum(pDate, vbMonday) - 1
 
                 Dim elementInArray As Variant
                 ' Get position of element in array
-                elementInArray = FindWeekInside4DArray(weekArr, Array(a, arr(1)), weekNumber)
+                elementInArray = FindWeekInside4DArray(weekArr, Array(a, arr(1)), pWeekNumber)
 
                 Select Case VarType(elementInArray(0))
                     Case 2  ' Integer
@@ -498,7 +455,7 @@ Function FilterByWeek(arr As Variant) As Variant
                         d = d + 1
                     Case 11 ' Boolean
                         ' Week doesn't exists in array
-                        weekArr(a, c, 0, 0) = weekNumber
+                        weekArr(a, c, 0, 0) = pWeekNumber
                         weekArr(a, c, d, 1) = d
                         weekArr(a, c, d, 2) = pDate
                         weekArr(a, c, d, 3) = pId
@@ -539,11 +496,6 @@ Function DisplayTotalTime(arr As Variant, firstSize As Integer, secondSize As In
     Dim i As Integer
     Dim elementCounter As Integer
     Dim elementInArray As Integer
-
-    ' Project variables
-    Dim pId As String
-    Dim pCalcTime As Long
-    Dim pTotalTime As Double 
     
     ReDim results(firstSize, secondSize)
 
@@ -702,12 +654,6 @@ Sub DisplayYearlyTime(arr As Variant, projectsArrSize As Integer, column As Stri
     yearArr = FilterByWeek(arr)
 
     Dim pWeek As Integer
-    Dim pYear As Integer
-    Dim pIndex As Integer
-    Dim pDate As Date
-    Dim pId As String
-    Dim pCalcTime As Long
-    Dim pTotalTime As Double
 
     Dim a As Integer
     Dim b As Integer
