@@ -2,7 +2,7 @@ Attribute VB_Name = "GetHoursByProject"
 
 Option Explicit
 ' Global variable here
-Public logFile As String
+Public logFile As String        ' Path of log file used for debugging
 
 Public counter As Integer
 Public previousCounter As Integer
@@ -15,19 +15,23 @@ Public pCalcTime As Long        ' Time worked on project calculated (difference 
 Public pTotalTime As Double     ' Time worked on project including breaks added together
 Public pWeekNumber As Integer   ' Week the project was worked on
 
+Public Const headerOne As Integer = 16  ' Size of main headers
+Public Const headerTwo As Integer = 13  ' Size of secondary headers
+Public Const text As Integer = 12       ' Size of normal text
+
+' Main function
 Sub GetHoursByProject()
-	'
 	' Add together how much time has been spend on projects
-    '
-	Call deleteLog()
+    ' Delete previous log file if it exists
+	' Call deleteLog()
 
     Dim lastCell As Range
     ' Get last cell (with content)
     Set lastCell = Sheets(ActiveSheet.name).Cells(Rows.Count, "A").End(xlUp)
-    
+
     Dim size As Integer
     size = 4
-    ' Create array
+
     Dim results() As Variant
     ' Assign dynamic size
     ReDim results(lastCell.Row, size)
@@ -93,64 +97,23 @@ Sub GetHoursByProject()
 
     Dim rowCount As Integer
 
+    ' Display total time spend on projects on the Excel sheet
     rowCount = DisplayTotalTime(results, previousCounter, size, column)
+    ' Increase row count for the next thing we're printing on the sheet
     rowCount = rowCount + 2
 
     Dim filteredResult() As Variant
-
+    ' Filter the data by year
     filteredResult = FilterByYear(results, previousCounter)
+    ' Write the yearly/weekly results on the Excel sheet
     Call DisplayYearlyTime(filteredResult, previousCounter, column, rowCount)
-
-    Exit Sub ' ---------------------------------------------------------------------------
-        
-    ' Dim b As Integer
-    ' ' Loop through array
-    ' For b = LBound(results) To UBound(results)
-        
-    '     pId = results(b, 0)
-    '     calculatedTime = results(b, 1)
-    '     totalTime = results(b, 2)
-        
-    '     ' Skip empty array items
-    '     If Len(pId) > 0 And Len(calculatedTime) > 0 And Len(totalTime) > 0 Then
-    '         Dim cellCounter
-    '         ' Since we have two headers above move three rows down
-    '         cellCounter = b + 3
-            
-    '         Cells(cellCounter, "K").value = pId
-    '         With Cells(cellCounter, "L")
-    '             .value = calculatedTime / 3600 ' Devide seconds into hours
-    '             .NumberFormat = "0.0"
-    '         End With
-    '         With Cells(cellCounter, "N")
-    '             .value = totalTime
-    '             .NumberFormat = "0.00"
-    '         End With
-            
-    '         'If you want to convert the decmial times to full times:
-    '         'For example, let's convert 12.675 hours to hours, minutes, and seconds.
-    '         '
-    '         'Start by finding the number of hours.
-    '         '12.675 hours = 12 hours + .675 hours
-    '         'Full hours = 12
-    '         '
-    '         'Then find the number of minutes
-    '         'minutes = .675 hours and 60 minutes
-    '         'minutes = 40.5 minutes
-    '         'Full minutes = 40
-    '         '
-    '         'Find the remaining seconds
-    '         'seconds = .5 minutes and 60 seconds
-    '         'seconds = 30 seconds
-    '         '
-    '         'Finally, rewrite as HH:MM:SS
-    '         'time = 12:40:30
-    '     End If
-    ' Next b
 End Sub
 
 ' ↓ Logging functions ----------------------------------------- ↓
+' These functions are here for debugging.
+' Only use them if you're working on this script
 
+' Get file path to the log file (currently writes logfile.txt to desktop)
 Function GetFilePath() As String
     Dim path As String
     Dim filename As String
@@ -164,6 +127,7 @@ Function GetFilePath() As String
     GetFilePath = path & "\" & filename
 End Function
 
+' Delete log file if it exists
 Function deleteLog()
 	logFile = GetFilePath()
     If FileExists(logFile) Then
@@ -220,6 +184,7 @@ Function FileExists(ByRef strFileName As String) As Boolean
     On Error GoTo 0
 End Function
 
+' Output variable name
 Function VarTypeName(value As Variant) As String
     Select Case VarType(value)
         Case 0
@@ -271,8 +236,8 @@ End Function
 
 ' ↑ Logging functions ----------------------------------------- ↑
 
+' Check if value is an alphabetical character
 Function IsAlpha(s) As Boolean
-    ' Check if value is an alphabetical character
     IsAlpha = Len(s) And Not s Like "*[!a-zA-Z]*"
 End Function
 
@@ -281,6 +246,7 @@ Function ReplaceColon(value) As String
     ReplaceColon = Replace(value, ".", ":")
 End Function
 
+' Months + number in Dutch
 Function Months() As Variant
     Months = [{ "januari", 1; "februari", 2; "maart", 3; "april", 4; "mei", 5; "juni", 6; "juli", 7; "augustus", 8; "september", 9; "oktober", 10; "november", 11; "december", 12 }]
 End Function
@@ -340,6 +306,7 @@ Function CheckIfDate(value As String) As Variant
     CheckIfDate = Array(result, dateResult)
 End Function
 
+' Filter data by year
 Function FilterByYear(arr As Variant, count As Integer) As Variant
     ' Array for storing final values. Except it's initializer size values are too high
     ' We'll determine the correct size after storing everything
@@ -409,15 +376,13 @@ Function FilterByYear(arr As Variant, count As Integer) As Variant
     Next i
 
     Dim result() As Variant
-    ' yearCounter = 1d size
-    ' count = 2d size
-    ' 5 = 3d size
-    ' yearProjects = final array
+    ' Final array with proper sizes
     result = Array(yearCounter, count + 1, 5, yearProjects)
 
     FilterByYear = result
 End Function
 
+' Filter data by week
 Function FilterByWeek(arr As Variant) As Variant    
     Dim a As Integer
     Dim b As Integer
@@ -472,6 +437,7 @@ Function FilterByWeek(arr As Variant) As Variant
     FilterByWeek = Array(arr(0), arr(1), arr(1), 6, weekArr)
 End Function
 
+' Get start day of the week from week number and year
 Public Function GetDayFromWeekNumber(inYear As Integer, weekNumber As Integer, Optional dayInWeek As Integer = 1) As Date
     Dim i As Integer: i = 1
 
@@ -525,26 +491,26 @@ Function DisplayTotalTime(arr As Variant, firstSize As Integer, secondSize As In
     With Cells(row, Chr(columnNumber))
         .value = "Totale tijden"
         .Font.Bold = True
-        .Font.Size = 16
+        .Font.Size = headerOne
     End With
     
     With Cells(row + 1, Chr(columnNumber))
         .value = "Project"
         .Font.Bold = True
-        .Font.Size = 13
+        .Font.Size = headerTwo
     End With
     
     With Cells(row + 1, Chr(columnNumber + 1))
         .value = "Tijden"
         .Font.Bold = True
-        .Font.Size = 13
+        .Font.Size = headerTwo 
         .HorizontalAlignment = xlRight
     End With
     
     With Cells(row + 1, Chr(columnNumber + 3))
         .value = "Tijden met pauze"
         .Font.Bold = True
-        .Font.Size = 13
+        .Font.Size = headerTwo
     End With
     
     Dim b As Integer
@@ -558,14 +524,17 @@ Function DisplayTotalTime(arr As Variant, firstSize As Integer, secondSize As In
         ' Since we have two headers above move three rows down
         cellCounter = b + 3
         
+        ' Print the total time to the Excel sheet
         Cells(cellCounter, Chr(columnNumber)).value = pId
         With Cells(cellCounter, Chr(columnNumber + 1))
             .value = pCalcTime / 3600 ' Devide seconds into hours
             .NumberFormat = "0.0"
+            .Font.Size = text
         End With
         With Cells(cellCounter, Chr(columnNumber + 3))
             .value = pTotalTime
             .NumberFormat = "0.00"
+            .Font.Size = text
         End With
         
         'If you want to convert the decmial times to full times:
@@ -590,6 +559,7 @@ Function DisplayTotalTime(arr As Variant, firstSize As Integer, secondSize As In
     DisplayTotalTime = cellCounter
 End Function
 
+' Print yearly/weekly statistics to the sheet
 Sub DisplayYearlyTime(arr As Variant, projectsArrSize As Integer, column As String, row As Integer)
     Dim columnNumber As Integer
     columnNumber = CheckIfChrColumn(LCase(column), row)
@@ -607,6 +577,7 @@ Sub DisplayYearlyTime(arr As Variant, projectsArrSize As Integer, column As Stri
     Dim timesRow As String
     Dim timesBreakRow As String
 
+    ' Assign all the different columns we'll be using
     yearRow = Chr(columnNumber)
     weekRow = Chr(columnNumber + 1)
     projectRow = Chr(columnNumber + 3)
@@ -616,38 +587,37 @@ Sub DisplayYearlyTime(arr As Variant, projectsArrSize As Integer, column As Stri
     With Cells(row, Chr(columnNumber))
         .value = "Tijden per week"
         .Font.Bold = True
-        .Font.Size = 16
+        .Font.Size = headerOne
     End With
     
     With Cells(row + 1, yearRow)
         .value = "Jaar"
         .Font.Bold = True
-        .Font.Size = 13
+        .Font.Size = headerTwo
     End With
 
     With Cells(row + 1, weekRow)
         .value = "Week"
         .Font.Bold = True
-        .Font.Size = 13
+        .Font.Size = headerTwo
     End With
 
     With Cells(row + 1, projectRow)
         .value = "Project"
         .Font.Bold = True
-        .Font.Size = 13
+        .Font.Size = headerTwo
     End With
     
     With Cells(row + 1, timesRow)
         .value = "Tijden"
         .Font.Bold = True
-        .Font.Size = 13
-        .HorizontalAlignment = xlRight
+        .Font.Size = headerTwo
     End With
     
     With Cells(row + 1, timesBreakRow)
         .value = "Tijden met pauze"
         .Font.Bold = True
-        .Font.Size = 13
+        .Font.Size = headerTwo
     End With
 
     Dim yearArr() As Variant
@@ -662,24 +632,25 @@ Sub DisplayYearlyTime(arr As Variant, projectsArrSize As Integer, column As Stri
     Dim cellCounter As Integer
     cellCounter = row + 1
 
+    ' For loop the years
     For a = 0 To yearArr(0)
         cellCounter = cellCounter + 1
         pYear = yearArr(4)(a, 0, 0, 0)
 
         With Cells(cellCounter, yearRow)
             .value = pYear
-            .Font.Size = 12
+            .Font.Size = text
             .HorizontalAlignment = xlLeft
         End With
 
-        ' Call outputToFile("Year", pYear)
+        ' For loop the weeks
         For b = 1 To yearArr(1)
             pWeek = yearArr(4)(a, b, 0, 0)
             if pWeek > 0 Then
                 cellCounter = cellCounter + 1
                 With Cells(cellCounter, weekRow)
                     .value = pWeek & " (" & GetDayFromWeekNumber(pYear, pWeek) & ")"
-                    .Font.Size = 12
+                    .Font.Size = text
                     .HorizontalAlignment = xlLeft
                 End With
 
@@ -687,8 +658,7 @@ Sub DisplayYearlyTime(arr As Variant, projectsArrSize As Integer, column As Stri
                 ReDim weekResultSorted(yearArr(1), 3)
                 Dim weekResultCount As Integer
 
-                ' Call outputToFile("Week", pWeek)
-                ' Add week results together
+                ' Sort/add week results together
                 For c = 1 To yearArr(2)
                     pId = yearArr(4)(a, b, c, 3) ' pId
 
@@ -700,7 +670,7 @@ Sub DisplayYearlyTime(arr As Variant, projectsArrSize As Integer, column As Stri
 
                         Dim elementInArray As Integer
                         ' Get position of element in array
-                        elementInArray = FindElementInsideArray(weekResultSorted, pId, 3)
+                        elementInArray = FindElementInsideArray(weekResultSorted, pId)
 
                         ' If project isn't added to array yet add it
                         If elementInArray = -1 Then
@@ -727,19 +697,19 @@ Sub DisplayYearlyTime(arr As Variant, projectsArrSize As Integer, column As Stri
                         cellCounter = cellCounter + 1
                         With Cells(cellCounter, projectRow)
                             .value = pId
-                            .Font.Size = 12
+                            .Font.Size = text
                             .HorizontalAlignment = xlLeft
                         End With
 
                         With Cells(cellCounter, timesRow)
                             .value = pCalcTime  / 3600
-                            .Font.Size = 12
+                            .Font.Size = text
                             .HorizontalAlignment = xlLeft
                         End With
 
                         With Cells(cellCounter, timesBreakRow)
                             .value = pTotalTime
-                            .Font.Size = 12
+                            .Font.Size = text
                             .HorizontalAlignment = xlLeft
                         End With
                     End If
@@ -749,7 +719,10 @@ Sub DisplayYearlyTime(arr As Variant, projectsArrSize As Integer, column As Stri
     Next a
 End Sub
 
+' Check if string passed is indeed a column name
 Function CheckIfChrColumn(column As String, row As Integer) As Integer
+    ' The document this script will be running on should only go up to column e/f
+    ' Edit this if it goes up to columns higher than Z
     If Not Len(column) = 1 Then
         CheckIfChrColumn = -1
         Exit Function
@@ -826,7 +799,7 @@ Function CheckIfStringContainsArrayElement(content As String, arr As Variant, Op
     CheckIfStringContainsArrayElement = Array(result, length, index)
 End Function
 
-' Find something inside an array
+' Find something inside 1-3D array
 Function FindElementInsideArray(arr As Variant, valueToBeFound As Variant, Optional ByRef indexNumber As Integer = 0) As Integer
     Dim dimensions As Integer
     dimensions = NumberOfArrayDimensions(arr)
@@ -875,7 +848,7 @@ Function FindElementInsideArray(arr As Variant, valueToBeFound As Variant, Optio
     End If
 End Function
 
-' Find something inside an array
+' Find something inside an 4D array
 Function FindWeekInside4DArray(arr As Variant, sizesArr As Variant, valueToBeFound As Variant) As Variant
     Dim dimensions As Integer
     dimensions = NumberOfArrayDimensions(arr)
@@ -948,6 +921,3 @@ Public Function NumberOfArrayDimensions(arr As Variant) As Integer
         NumberOfArrayDimensions = -1
     End If
 End Function
-
-
-
