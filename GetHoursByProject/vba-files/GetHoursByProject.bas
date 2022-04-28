@@ -288,17 +288,36 @@ Function CheckIfDate(value As String) As Variant
             Dim monthLong As String
             Dim monthShort As Integer
             Dim year As Integer
+            Dim temp As String
 
             ' Extract long day. Example: Dinsdag 12
             dayLong = Left(value, position - 2)
+
             ' Extract short day. Example: 12
-            dayShort = CInt(Right(dayLong, 2))
+            temp = Right(dayLong, 2)
+            if IsNumeric(temp) Then
+                dayShort = CInt(temp)
+            Else
+                MsgBox "Script kon geen dag (nummer) halen uit: '" & value & _ 
+                    "'. Zorg er voor dat de datum dit formaat heeft: 'Woensdag 16 maart 2020'"
+                End
+            End If 
             ' Extract long month. Example: April
             monthLong = Mid(value, position, length)
+
             ' Extract short month. Example: 4
             monthShort = strInArray(2)
+
             ' Extract year
-            year = CInt(Right(value, 4))
+            temp = Right(value, 4)
+            if IsNumeric(temp) Then
+                year = CInt(temp)
+            Else
+                MsgBox "Script kon geen jaar (nummer) halen uit: '" & value & _ 
+                    "'. Zorg er voor dat de datum dit formaat heeft: 'Woensdag 16 maart 2020'" 
+                End
+            End If 
+
             ' Pass date to variable with Date type
             dateResult = DateSerial(year, monthShort, dayShort)
         End If
@@ -514,7 +533,7 @@ Function DisplayTotalTime(arr As Variant, firstSize As Integer, secondSize As In
     
     Dim b As Integer
     Dim cellCounter As Integer
-    cellCounter = row + 3
+    cellCounter = row + 2
     ' Loop through array
     For b = 0 To elementCounter - 1
         pId = results(b, 1)
