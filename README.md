@@ -10,3 +10,4 @@ A repo containing different VBA projects I've worked on or am currently working 
 6. If you want live changes then click `Start XVBA Live Server`.
 
 If you want to add XVBA to a new project open the new project in VSC and click `Bootstrap XVBA Config` on the `XVBA - MACRO LIST` menu.
+The files containing the VBA code can be found under `projectName/vba-files/projectName.bas`
