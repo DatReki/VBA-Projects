@@ -75,6 +75,33 @@ Sub GetHoursByProject()
                 totalTime = Cells(i, "E").value
                 startTime = ReplaceColon(Cells(i, "C").text)
                 endTime = ReplaceColon(Cells(i, "D").text)
+                ' Error handling
+                if Len(totalTime) = 0 Or Not IsNumeric(totalTime) Then
+                    if Len(totalTime) = 0 Then
+                        totalTime = " "
+                    End If
+                    MsgBox "Script kon geen totale tijd halen uit: '" & totalTime & _ 
+                        "'." & vbCrLf & "Op kolom E en rij " & i & _
+                        "." & vbCrLf & " Zorg ervoor dat de waarde hiervan een nummer is."
+                    End
+                ElseIf Not CheckIfTime(startTime) Then 
+                    if Len(startTime) = 0 Then
+                        startTime = " "
+                    End If
+                    MsgBox "Script kon geen start tijd halen uit: '" & startTime & _ 
+                        "'." & vbCrLf & "Op kolom C en rij " & i & _
+                        "." & vbCrLf & " Zorg ervoor dat de waarde hiervan een tijd is (voorbeeld: 09:00)."
+                    End
+                ElseIf Not CheckIfTime(endTime) Then 
+                    if Len(endTime) = 0 Then
+                        endTime = " "
+                    End If
+                    MsgBox "Script kon geen eind tijd halen uit: '" & endTime & _ 
+                        "'." & vbCrLf & "Op kolom D en rij " & i & _
+                        "." & vbCrLf & " Zorg ervoor dat de waarde hiervan een tijd is (voorbeeld: 09:00)."
+                    End
+                End If 
+
                 ' Total time calculated without breaks
                 calculatedTime = CalculateTimeDifference(startTime, endTime) ' Format(, "hh:mm")
                 
@@ -244,12 +271,28 @@ End Function
 
 ' Replace dot with colon
 Function ReplaceColon(value) As String
-    ReplaceColon = Replace(value, ".", ":")
+    ReplaceColon = Replace(Trim(value), ".", ":")
 End Function
 
 ' Months + number in Dutch
 Function Months() As Variant
     Months = [{ "januari", 1; "februari", 2; "maart", 3; "april", 4; "mei", 5; "juni", 6; "juli", 7; "augustus", 8; "september", 9; "oktober", 10; "november", 11; "december", 12 }]
+End Function
+
+' Check if value provided is a time
+Function CheckIfTime(value As String) As Boolean
+    If Len(value) = 0 Then
+        CheckIfTime = False
+        Exit Function
+    ElseIf IsDate(value) Then
+        CheckIfTime = True
+        Exit Function
+    ElseIf IsNumeric(Mid(value, 1, 1)) And IsNumeric(Mid(value, 2, 1)) And Mid(value, 3, 1) = ":" And IsNumeric(Mid(value, 4, 1)) And IsNumeric(Mid(value, 5, 1)) Then
+        ' Check if value has following format: number number : number number
+        CheckIfTime = True
+        Exit Function
+    End If
+    CheckIfTime = False
 End Function
 
 ' Check if value provided is a date
@@ -299,7 +342,7 @@ Function CheckIfDate(value As String) As Variant
                 dayShort = CInt(temp)
             Else
                 MsgBox "Script kon geen dag (nummer) halen uit: '" & value & _ 
-                    "'. Zorg er voor dat de datum dit formaat heeft: 'Woensdag 16 maart 2020'"
+                    "'." & vbCrLf & " Zorg er voor dat de datum dit formaat heeft: 'Woensdag 16 maart 2020'"
                 End
             End If 
             ' Extract long month. Example: April
@@ -314,7 +357,7 @@ Function CheckIfDate(value As String) As Variant
                 year = CInt(temp)
             Else
                 MsgBox "Script kon geen jaar (nummer) halen uit: '" & value & _ 
-                    "'. Zorg er voor dat de datum dit formaat heeft: 'Woensdag 16 maart 2020'" 
+                    "'." & vbCrLf & " Zorg er voor dat de datum dit formaat heeft: 'Woensdag 16 maart 2020'" 
                 End
             End If 
 
@@ -447,7 +490,6 @@ Function FilterByWeek(arr As Variant) As Variant
                     weekArr(a, c, d, 5) = pTotalTime
                     c = c + 1
                     d = d + 1
-                Case Else
                 End Select
             End If
         Next b
@@ -919,11 +961,10 @@ Function EqualTo(valueOne As Variant, valueTwo As Variant) As Boolean
 End Function
 
 Public Function NumberOfArrayDimensions(arr As Variant) As Integer
-    '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-    ' NumberOfArrayDimensions                                                                           '
-    ' This function returns the number of dimensions of an array. An unallocated dynamic array          '
-    ' has 0 dimensions. This condition can also be tested with IsArrayEmpty.                            '
-    '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+    ' NumberOfArrayDimensions                                                                           
+    ' This function returns the number of dimensions of an array. An unallocated dynamic array          
+    ' has 0 dimensions. This condition can also be tested with IsArrayEmpty.                            
+    
     If IsArray(arr) Then
         Dim Ndx As Integer
         Dim Res As Integer
