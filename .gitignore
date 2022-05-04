@@ -1,3 +1,4 @@
 /**/*.xlsb
 /**/*.xlsm
-!/**/example.xlsm
+!**/example.xlsb
+!**/Example.xlsb
